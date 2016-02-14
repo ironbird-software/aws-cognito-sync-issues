@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="aws_identity_pool">region:identity_pool</string>
+
+    <!-- Must be client_id of the *Web* client in Google Developper Console on Credentials page -->
+    <string name="google_server_client_id"></string>
+
+    <string name="facebook_app_id"></string>
+</resources>

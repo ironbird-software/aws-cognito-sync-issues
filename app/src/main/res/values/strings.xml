@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">AWS Cognito Test</string>
+
+    <string name="aws_identity_pool_not_available">You have not defined you AWS identity pool in res/values/configuration_strings.xml.\n\nThe application cannot work.</string>
+    <string name="facebook_signin_not_available">You have not defined a Facebook app ID in res/values/configuration_strings.xml.\nFacebook sigin in will not be available.</string>
+    <string name="google_login_not_available">You have not defined a Google service ID in res/values/configuration_strings.xml.\nGoogle sigin in will not be available.</string>
+    
+    <string name="please_sign_in">Please sign in</string>
+    
+    <string name="session_expiration">Session expiration</string>
+    <string name="values">Values</string>
+    <string name="when">When</string>
+    <string name="phone">Phone</string>
+    <string name="last_updated">Last updated at %s</string>
+    <string name="put_values">Put values</string>
+    <string name="refresh_values">Refresh values</string>
+    <string name="unset">#UNSET</string>
+    
+</resources>
