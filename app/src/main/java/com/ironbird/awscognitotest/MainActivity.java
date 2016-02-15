@@ -15,7 +15,7 @@ import com.ironbird.awscognitotest.account.AccountManager;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AccountManager.SyncObserver{
 
     //***********************************************************************//
     //                           Inner classes                               //
@@ -56,7 +56,21 @@ public class MainActivity extends AppCompatActivity {
     //                               Interfaces                              //
     //***********************************************************************//
 
-    /* Implements TheInterface */
+    /* Implements AccountManager.SyncObserver */
+
+    /**
+     * Called when a dataset in the account manager changes
+     * @param dataset the name of teh dataset that did change
+     */
+    @Override
+    public void onDatasetDidSync(String dataset) {
+        this.runOnUiThread( new Runnable() {
+            @Override
+            public void run() {
+                MainActivity.this.updateUI();
+            }
+        });
+    }
 
 
     //***********************************************************************//
@@ -83,13 +97,21 @@ public class MainActivity extends AppCompatActivity {
         whenTxt = (TextView) this.findViewById(R.id.main_when_txt);
         phoneTxt = (TextView) this.findViewById(R.id.main_phone_txt);
 
+        AccountManager.getInstance().setSyncObserver(this);
 
         Button putValuesBtn = (Button) this.findViewById(R.id.main_put_values_btn);
         putValuesBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 AccountManager.getInstance().putValues();
-                MainActivity.this.updateUI();
+            }
+        });
+
+        Button refreshValuesBtn = (Button) this.findViewById(R.id.main_refresh_values_btn);
+        refreshValuesBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AccountManager.getInstance().refreshValues();
             }
         });
 
@@ -142,11 +164,19 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI() {
 
         // The credentials expiration
-        Date exprationDate = AccountManager.getInstance().getSessionExpiration();
-
+        Date expirationDate = AccountManager.getInstance().getSessionExpiration();
+        Date now = new Date();
         String expiration;
-        if (exprationDate != null) {
-            expiration = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(exprationDate);
+
+        if (expirationDate != null) {
+            expiration = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(expirationDate);
+
+            if (now.after(expirationDate)) {
+                expirationTxt.setTextColor(getResources().getColor(R.color.crimson));
+            } else {
+                expirationTxt.setTextColor(getResources().getColor(R.color.darkgreen));
+            }
+
         } else {
             expiration = this.getString(R.string.unset);
         }
@@ -157,6 +187,5 @@ public class MainActivity extends AppCompatActivity {
         whenTxt.setText(AccountManager.getInstance().getWhen());
 
     }
-
 
 }

@@ -1,6 +1,7 @@
 package com.ironbird.awscognitotest.account;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
 
@@ -25,6 +26,46 @@ public class AccountManager {
     //                           Inner classes                               //
     //***********************************************************************//
 
+    /**
+     * Interface that should be implemented by observers of the synchronisation
+     */
+    public interface SyncObserver {
+
+        void onDatasetDidSync(String dataset);
+
+    }
+
+
+
+    public class SynchronizeDatasetTask extends AsyncTask<Void, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+
+            Date now = new Date();
+            Date expiration = credentialsProvider.getSessionCredentitalsExpiration();
+
+            // Do we need to refresh credentials
+            if (now.after(expiration)) {
+                String message = String.format("Session expired since %s... Will try to refresh credentials.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
+                Log.e(TAG, message);
+                credentialsProvider.refresh();
+                expiration = credentialsProvider.getSessionCredentitalsExpiration();
+                message = String.format("Session expiration is now %s.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
+                Log.v(TAG, message);
+
+            } else {
+                String message = String.format("Session expiration is %s... No need to refresh.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
+                Log.v(TAG, message);
+            }
+
+            CustomSyncCallBack callBack = new CustomSyncCallBack(syncObserver);
+            dataset.synchronizeOnConnectivity(callBack);
+
+            return Boolean.TRUE;
+        }
+    }
+
 
     //***********************************************************************//
     //                          Class variables                              //
@@ -34,6 +75,8 @@ public class AccountManager {
     private static final String DATASET_NAME = "test";
     private static final String KEY_WHEN = "when";
     private static final String KEY_PHONE = "phone";
+
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     private static AccountManager instance = new AccountManager();
 
@@ -52,6 +95,8 @@ public class AccountManager {
     private CognitoSyncManager syncManager;
 
     private Dataset dataset;
+
+    private SyncObserver syncObserver;
 
 
     //***********************************************************************//
@@ -87,6 +132,14 @@ public class AccountManager {
     //***********************************************************************//
     //                         Getters and setters                           //
     //***********************************************************************//
+
+    public SyncObserver getSyncObserver() {
+        return syncObserver;
+    }
+
+    public void setSyncObserver(SyncObserver syncObserver) {
+        this.syncObserver = syncObserver;
+    }
 
 
     //***********************************************************************//
@@ -189,12 +242,27 @@ public class AccountManager {
         return context.getString(R.string.unset);
     }
 
-
+    /**
+     * Put a new set of values into the dataset and pushes the results to the remote storage.
+     * Ths syncObserver will be called at the end of the sync operation.
+     */
     public void putValues() {
         String phone = Build.MANUFACTURER + " " + Build.MODEL;
-        String when = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        String when = new SimpleDateFormat(DATE_FORMAT).format(new Date());
         dataset.put(KEY_PHONE, phone);
         dataset.put(KEY_WHEN, when);
+
+        //As we might need to refresh the credentials, we synchronize the dataset asynchronously
+        new SynchronizeDatasetTask().execute();
+
+    }
+
+    /**
+     * Refresh the values from the remote storage and call the syncObserver at the end of the sync operations.
+     */
+    public void refreshValues() {
+        //As we might need to refresh the credentials, we synchronize the dataset asynchronously
+        new SynchronizeDatasetTask().execute();
     }
 
 

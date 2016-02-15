@@ -65,7 +65,8 @@
                 android:text="2016-02-14 18.23.32"
                 android:id="@+id/main_when_txt"
                 android:layout_marginLeft="15dp"
-                android:textColor="@color/colorPrimaryDark"/>
+                android:textColor="@color/colorPrimaryDark"
+                android:typeface="monospace"/>
         </TableRow>
         <TableRow
             android:layout_width="match_parent"
@@ -84,7 +85,8 @@
                 android:text="Motorola XT2356"
                 android:id="@+id/main_phone_txt"
                 android:layout_marginLeft="15dp"
-                android:textColor="@color/colorPrimaryDark"/>
+                android:textColor="@color/colorPrimaryDark"
+                android:typeface="monospace"/>
         </TableRow>
     </TableLayout>
 
