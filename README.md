@@ -20,7 +20,7 @@ In order to highlight the issues above, we have built this small application:
 ## How to build/run it?
 You will need to have at least a Google signin service or a Facebook app to allow signin with either or both.
 * Follow the steps in the [AWS Cognito documentation](https://docs.aws.amazon.com/cognito/devguide/identity/identity-pools/) to create you identity pool.
-* Put your identity pool in the [resource file configuration_strings.xml](app/src/main/res/values/congiguration_strings.xml)
+* Put your identity pool in the [resource file configuration_strings.xml](app/src/main/res/values/configuration_strings.xml)
 * If you want to use Facebook login, create your Facebook app and [declare it as an identity provider](https://docs.aws.amazon.com/cognito/devguide/identity/external-providers/facebook/)
 * Put your Facebook App ID in configuration_strings.xml
 * If you want to use Google Signin [create & configure a project in the Google Developer Console and declare it as an OpenID provider in your AWS console](https://docs.aws.amazon.com/cognito/devguide/identity/external-providers/google/).
