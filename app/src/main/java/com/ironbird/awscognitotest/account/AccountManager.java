@@ -49,7 +49,7 @@ public class AccountManager {
             if (now.after(expiration)) {
                 String message = String.format("Session expired since %s... Will try to refresh credentials.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
                 Log.e(TAG, message);
-                credentialsProvider.refresh();
+                credentialsProvider.getCredentials();
                 expiration = credentialsProvider.getSessionCredentitalsExpiration();
                 message = String.format("Session expiration is now %s.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
                 Log.v(TAG, message);
@@ -115,6 +115,8 @@ public class AccountManager {
                 Regions.EU_WEST_1 // Put your own region here
 
         );
+
+
 
         // Initializing the Sync Manager
         syncManager = new CognitoSyncManager(
@@ -193,10 +195,10 @@ public class AccountManager {
 
             if (expiration != null && expiration.before(now)) {
                 Log.e(TAG, String.format("Identity %s - session expired at %s",
-                        cachedIdentity, SimpleDateFormat.getInstance().format(expiration)));
+                        cachedIdentity, new SimpleDateFormat(DATE_FORMAT).format(expiration)));
             } else if (expiration != null) {
                 Log.d(TAG, String.format("Identity %s - session will expire at %s",
-                        cachedIdentity, SimpleDateFormat.getInstance().format(expiration)));
+                        cachedIdentity, new SimpleDateFormat(DATE_FORMAT).format(expiration)));
             } else {
                 Log.d(TAG, String.format("Identity %s - session expiration UNSET...",
                         cachedIdentity));

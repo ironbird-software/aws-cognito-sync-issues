@@ -5,9 +5,10 @@ Those issues are around the Cognito credentials refresh method and strategies.
 
 Once identified, Cognito issues temporary credentials (expire after 1 hour) that allow you to perform dataset synchronisation with Cognito Sync.
 
-We faced 2 issues:
+We faced 1 issue:
 * Once Cognito Credentials have expired, they cannot be refreshed any more (we have not found how at least) and any sync attempt leads to a `com.amazonaws.services.cognitoidentity.model.NotAuthorizedException: Access to Identity 'eu-west-1:xxxx' is forbidden. (Service: AmazonCognitoIdentity; Status Code: 400; Error Code: NotAuthorizedException; Request ID: zzzz)`
-* Even if the first issue could be overcome (you can refresh expired credentials) there no way to do this when using `synchronizeOnConnectivity` indeed, your credentials might be valid when triggering the sync, but expired when the connectivity comes back.
+
+What is really disturbing is that we have as well highlighted that Cognito can refresh the credentials automatically in some situations (see below)
 
 ## What does it do?
 In order to highlight the issues above, we have built this small application:
@@ -29,7 +30,7 @@ You will need to have at least a Google signin service or a Facebook app to allo
 
 You now should be able to build the application.
 
-## How is it organized?
+## How is it architectured?
 The application is over simplified, but yet we kept an architecture that fits a full blown application (rather than the "Hellow world" kind).
 
 * There are 2 activities
@@ -40,9 +41,9 @@ The application is over simplified, but yet we kept an architecture that fits a 
   * It exposes the data stored in the dataset and session expiration
   * It exposes a method to put new data in the dataset (this methods triggers a sync and tries to refresh the Cognito credentials if necessary).
 
-## How to trigger the issues?
+## How to trigger the issue?
 
-### Issue 1: Credential cannot be refreshed while expired
+### Credential cannot be refreshed while expired
 * Clear application data if you used it once
 * Launch the application
 * Signin with your preferred method
@@ -50,14 +51,14 @@ The application is over simplified, but yet we kept an architecture that fits a 
 * _Play_ with the application a bit (put data, refresh data)
 * After one hour (after the credential have expired), the application should *crash* if you press either "Put data" or "Refresh data". The console should show something along the lines of `com.amazonaws.services.cognitoidentity.model.NotAuthorizedException: Access to Identity 'eu-west-1:xxxx' is forbidden. (Service: AmazonCognitoIdentity; Status Code: 400; Error Code: NotAuthorizedException; Request ID: zzzz)`
 
-### Issue 2: Cannot refresh credentials if the expire while there is no network and sync ar pending
+### ...While they are perfectly refreshed if a sync was requested while a network blackout
 * Clear application data if you used it once
 * Launch the application
 * Signin with your preferred method
 * _Play_ with the application a bit (put data, refresh data)
-* At _expiration_ minus 5 minutes, shutdown your devices 3G & wifi (any network really)
-* _Play_ with the application once more (put data, it cannot be synchronized, but as we called `synchronizeOnConnectivity`, it should be synchronized as soon as connectivity comes back)
-* Wait till _expiration_ plus 5 minutes
+* At _expiration_ **minus 5 minutes**, shutdown your devices 3G & wifi (any network really)
+* Still before expiration, _play_ with the application once more (put data, it cannot be synchronized, but as we called `synchronizeOnConnectivity`, it should be synchronized as soon as connectivity comes back)
+* Wait till _expiration_ **plus 2 minutes**
 * Reenable Wifi (or 3G, or any network)
-* The application crashes
+* You should see the extended session expiration in the UI (and logs) sign that the SDK automatically detected that the session was expired and renewed the session.
 
