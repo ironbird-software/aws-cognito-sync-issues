@@ -1,6 +1,8 @@
 package com.ironbird.awscognitotest;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,7 +28,7 @@ import com.ironbird.awscognitotest.account.AccountManager;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
+public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, Constants {
 
 
     //***********************************************************************//
@@ -44,10 +46,20 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             if (identity != null && !identity.isEmpty()) {
 
                 Log.v(TAG, String.format("Obtained AWS identity %s", identity));
+
+                // Storing last used provider & token (will be used when refreshing)
+                String provider = (String) logins[0].keySet().toArray()[0];
+                String token = logins[0].get(provider);
+                SharedPreferences settings = getSharedPreferences(PREF_FILE, Activity.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString(KEY_LAST_USED_PROVIDER, provider);
+                editor.putString(KEY_PROVIDER_TOKEN, token);
+                editor.apply();
+
                 return Boolean.TRUE;
             }
 
-            Log.e(TAG, "Failed to obtain a valid identity... In all likelyhood, this will never show... An exception happened above...");
+            Log.e(TAG, "Failed to obtain a valid identity... In all likelihood, this will never show... An exception happened above...");
             return Boolean.FALSE;
         }
 
@@ -109,7 +121,8 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        String message = String.format("Failed to connect to Google [error #%d, %s]...", connectionResult.getErrorCode(), connectionResult.getErrorMessage());
+        Log.e(TAG, message);
     }
 
     //***********************************************************************//
@@ -243,8 +256,8 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
             // We can request some Cognito Credentials
             GoogleSignInAccount acct = result.getSignInAccount();
             Map<String, String> logins = new HashMap<>();
-            logins.put("accounts.google.com", acct.getIdToken());
-            Log.v(TAG, String.format("Google token <<<\n%s\n>>>", logins.get("accounts.google.com")));
+            logins.put(GOOGLE_LOGIN, acct.getIdToken());
+            Log.v(TAG, String.format("Google token <<<\n%s\n>>>", logins.get(GOOGLE_LOGIN)));
 
             // The identity must be created asynchronously
             new CreateIdentityTask().execute(logins);
@@ -277,8 +290,8 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         Log.v(TAG, "Successfully logged in with Facebook...");
 
         final Map<String, String> logins = new HashMap<>();
-        logins.put("graph.facebook.com", AccessToken.getCurrentAccessToken().getToken());
-        Log.v(TAG, String.format("Facebook token <<<\n%s\n>>>", logins.get("graph.facebook.com")));
+        logins.put(FACEBOOK_LOGIN, AccessToken.getCurrentAccessToken().getToken());
+        Log.v(TAG, String.format("Facebook token <<<\n%s\n>>>", logins.get(FACEBOOK_LOGIN)));
 
         // The identity must be created asynchronously
         new CreateIdentityTask().execute(logins);

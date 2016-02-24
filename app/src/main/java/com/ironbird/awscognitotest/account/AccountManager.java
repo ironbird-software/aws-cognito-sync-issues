@@ -45,14 +45,9 @@ public class AccountManager {
             Date now = new Date();
             Date expiration = credentialsProvider.getSessionCredentitalsExpiration();
 
-            // Do we need to refresh credentials
             if (now.after(expiration)) {
                 String message = String.format("Session expired since %s... Will try to refresh credentials.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
                 Log.e(TAG, message);
-                credentialsProvider.getCredentials();
-                expiration = credentialsProvider.getSessionCredentitalsExpiration();
-                message = String.format("Session expiration is now %s.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
-                Log.v(TAG, message);
 
             } else {
                 String message = String.format("Session expiration is %s... No need to refresh.", new SimpleDateFormat(DATE_FORMAT).format(expiration));
@@ -70,6 +65,7 @@ public class AccountManager {
     //***********************************************************************//
     //                          Class variables                              //
     //***********************************************************************//
+
 
     private static final String TAG = AccountManager.class.getSimpleName();
     private static final String DATASET_NAME = "test";
@@ -181,6 +177,28 @@ public class AccountManager {
     }
 
 
+
+    /**
+     * Refresh the Cognito credentials based on the new logins map.
+     * This must NOT be called from the main thread
+     * @param logins the login map we shall use to refresh the credentials
+     */
+    public void refreshCredentials(Map<String, String> logins) {
+
+        try {
+            credentialsProvider.setLogins(logins);
+            credentialsProvider.refresh();
+
+            Log.v(TAG, String.format("Obtained new credentials (will expire %s)", SimpleDateFormat.getInstance().format(credentialsProvider.getSessionCredentitalsExpiration())));
+        } catch (Exception e) {
+            String message = String.format("Got %s %s while refreshing credentials...",
+                    e.getClass().getSimpleName(), e.getMessage());
+            Log.e(TAG, message, e);
+        }
+    }
+
+
+
     /**
      * Test whether we are bound to an identity or not
      * @return true if we have a cached identity
@@ -189,24 +207,33 @@ public class AccountManager {
 
         String cachedIdentity = credentialsProvider.getCachedIdentityId();
 
-        if (cachedIdentity != null) {
-            Date now = new Date();
-            Date expiration = credentialsProvider.getSessionCredentitalsExpiration();
-
-            if (expiration != null && expiration.before(now)) {
-                Log.e(TAG, String.format("Identity %s - session expired at %s",
-                        cachedIdentity, new SimpleDateFormat(DATE_FORMAT).format(expiration)));
-            } else if (expiration != null) {
-                Log.d(TAG, String.format("Identity %s - session will expire at %s",
-                        cachedIdentity, new SimpleDateFormat(DATE_FORMAT).format(expiration)));
-            } else {
-                Log.d(TAG, String.format("Identity %s - session expiration UNSET...",
-                        cachedIdentity));
-            }
-        }
-
         return  cachedIdentity != null && !cachedIdentity.isEmpty();
     }
+
+
+
+    /**
+     * Returns whether the current Cognito session is expired
+     * @return true if the Cognito session is expired or does not exist
+     */
+    public boolean isSessionExpired() {
+        Date now = new Date();
+        Date expiration = credentialsProvider.getSessionCredentitalsExpiration();
+
+        // the below is just log
+        if (expiration != null && expiration.before(now)) {
+            Log.w(TAG, String.format("Session expired at %s",
+                    SimpleDateFormat.getInstance().format(expiration)));
+        } else if (expiration != null) {
+            Log.d(TAG, String.format("Session will expire at %s",
+                    SimpleDateFormat.getInstance().format(expiration)));
+        } else {
+            Log.d(TAG, "Session expiration UNSET (returning expired)...");
+        }
+
+        return (expiration == null || expiration.before(now));
+    }
+
 
     /**
      * Returns the Cognito credentials session expiration (might be null)
